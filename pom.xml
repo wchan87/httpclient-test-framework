@@ -20,6 +20,18 @@
 			<artifactId>littleproxy</artifactId>
 			<version>1.1.2</version>
 		</dependency>
+		<!-- allow slf4j to work -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>2.10.0</version>
+		</dependency>
+		<!-- allow commons-logging to work so we see http.wire entries -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-jcl</artifactId>
+			<version>2.10.0</version>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
