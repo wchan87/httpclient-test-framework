@@ -16,7 +16,6 @@ import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
-import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class BasicProxyHttpClientTest {
+public class ProxyHttpClientTest {
 
     private static final String HTTP_SCHEME = "http";
     private static final String LOCALHOST = "localhost";
@@ -39,7 +38,7 @@ public class BasicProxyHttpClientTest {
     private static final String USER = "user";
     private static final String PASS = "pass";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BasicProxyHttpClientTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyHttpClientTest.class);
 
     private HttpProxyServer proxyHttpServer;
     private HttpServer httpServer;
@@ -54,7 +53,7 @@ public class BasicProxyHttpClientTest {
     public void testProxy() throws IOException, URISyntaxException {
         // setup proxy server
         proxyHttpServer = DefaultHttpProxyServer.bootstrap()
-                .withPort(PROXY_PORT).start();
+                .withPort(PROXY_PORT).plusActivityTracker(new LoggingActivityTracker()).start();
         // setup embedded server
         httpServer = ServerBootstrap.bootstrap()
                 .setListenerPort(PORT)
@@ -74,7 +73,8 @@ public class BasicProxyHttpClientTest {
     public void testProxyAuthenticationRequired() throws IOException, URISyntaxException {
         // setup proxy server
         proxyHttpServer = DefaultHttpProxyServer.bootstrap()
-                .withPort(PROXY_PORT).withProxyAuthenticator(getProxyAuthenticator()).start();
+                .withPort(PROXY_PORT).plusActivityTracker(new LoggingActivityTracker())
+                .withProxyAuthenticator(getProxyAuthenticator()).start();
         // setup embedded server
         httpServer = ServerBootstrap.bootstrap()
                 .setListenerPort(PORT)
@@ -94,7 +94,8 @@ public class BasicProxyHttpClientTest {
     public void testProxyAuthenticationSuccess() throws IOException, URISyntaxException {
         // setup proxy server
         proxyHttpServer = DefaultHttpProxyServer.bootstrap()
-                .withPort(PROXY_PORT).withProxyAuthenticator(getProxyAuthenticator()).start();
+                .withPort(PROXY_PORT).plusActivityTracker(new LoggingActivityTracker())
+                .withProxyAuthenticator(getProxyAuthenticator()).start();
         // setup embedded server
         httpServer = ServerBootstrap.bootstrap()
                 .setListenerPort(PORT)
@@ -103,6 +104,7 @@ public class BasicProxyHttpClientTest {
                         // log the request headers to prove that Proxy-Authorization header isn't leaked
                         LOGGER.info("Request Header >> {} : {}", h.getName(), h.getValue());
                     }
+                    Assert.assertEquals(0, req.getHeaders("Proxy-Authentication").length);
                     resp.setStatusCode(HttpStatus.SC_OK);
                 })
                 .create();

@@ -23,7 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
-public class BasicHttpClientTest {
+public class HttpClientTest {
 
     private static final String HTTP_SCHEME = "http";
     private static final String HTTPS_SCHEME = "https";
