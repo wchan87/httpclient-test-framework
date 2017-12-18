@@ -49,8 +49,14 @@ public class ProxyHttpClientTest {
         httpServer.stop();
     }
 
+    /**
+     * Test confirming proxy server handles request and response on behalf of the client
+     *
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     @Test
-    public void testProxy() throws IOException, URISyntaxException {
+    public void testProxySimpleHttpGet() throws IOException, URISyntaxException {
         // setup proxy server
         proxyHttpServer = DefaultHttpProxyServer.bootstrap()
                 .withPort(PROXY_PORT).plusActivityTracker(new LoggingActivityTracker()).start();
@@ -66,9 +72,15 @@ public class ProxyHttpClientTest {
         HttpUriRequest httpUriRequest = RequestBuilder.get(new URIBuilder().setScheme(HTTP_SCHEME)
                 .setHost(LOCALHOST).setPort(PORT).setPath(ROOT_CONTEXT).build()).build();
         HttpResponse httpResponse = httpClient.execute(httpUriRequest);
-        Assert.assertEquals(httpResponse.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
+        Assert.assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
     }
 
+    /**
+     * Test confirming proxy server rejects request if Proxy-Authorization isn't provided
+     *
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     @Test
     public void testProxyAuthenticationRequired() throws IOException, URISyntaxException {
         // setup proxy server
@@ -87,9 +99,15 @@ public class ProxyHttpClientTest {
         HttpUriRequest httpUriRequest = RequestBuilder.get(new URIBuilder().setScheme(HTTP_SCHEME)
                 .setHost(LOCALHOST).setPort(PORT).setPath(ROOT_CONTEXT).build()).build();
         HttpResponse httpResponse = httpClient.execute(httpUriRequest);
-        Assert.assertEquals(httpResponse.getStatusLine().getStatusCode(), HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED);
+        Assert.assertEquals(HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED, httpResponse.getStatusLine().getStatusCode());
     }
 
+    /**
+     * Test confirming proxy server accepts request with Proxy-Authorization and strips it out on request to target server
+     *
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     @Test
     public void testProxyAuthenticationSuccess() throws IOException, URISyntaxException {
         // setup proxy server
@@ -121,7 +139,7 @@ public class ProxyHttpClientTest {
         HttpUriRequest httpUriRequest = RequestBuilder.get(new URIBuilder().setScheme(HTTP_SCHEME)
                 .setHost(LOCALHOST).setPort(PORT).setPath(ROOT_CONTEXT).build()).build();
         HttpResponse httpResponse = httpClient.execute(httpUriRequest);
-        Assert.assertEquals(httpResponse.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
+        Assert.assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
     }
 
     private ProxyAuthenticator getProxyAuthenticator() {
