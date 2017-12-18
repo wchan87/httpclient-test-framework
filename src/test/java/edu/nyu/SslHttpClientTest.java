@@ -65,6 +65,11 @@ public class SslHttpClientTest {
         crlHttpServer.start();
     }
 
+    /**
+     * Returns the content of the /ca/ca.crl file where we revoked our localhost cert in src/test/resources
+     *
+     * @return HttpRequestHandler
+     */
     private static HttpRequestHandler getCrlRequestHandler() {
         return (req, resp, ctx) -> {
             try {
@@ -121,6 +126,18 @@ public class SslHttpClientTest {
         Assert.assertEquals(httpResponse.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
     }
 
+    /**
+     * Test confirming that CRL is checked correctly when enabled
+     *
+     * @throws UnrecoverableKeyException
+     * @throws CertificateException
+     * @throws NoSuchAlgorithmException
+     * @throws KeyStoreException
+     * @throws IOException
+     * @throws KeyManagementException
+     * @throws URISyntaxException
+     * @throws InvalidAlgorithmParameterException
+     */
     @Test
     public void testCrlCheck() throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException,
             KeyStoreException, IOException, KeyManagementException, URISyntaxException,
@@ -173,6 +190,17 @@ public class SslHttpClientTest {
         }
     }
 
+    /**
+     * Builds the keystore which is used by the mock server
+     *
+     * @return SSLContext
+     * @throws UnrecoverableKeyException
+     * @throws CertificateException
+     * @throws NoSuchAlgorithmException
+     * @throws KeyStoreException
+     * @throws IOException
+     * @throws KeyManagementException
+     */
     private SSLContext buildKeyStoreSslContext() throws UnrecoverableKeyException, CertificateException,
             NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
         return SSLContextBuilder.create()
@@ -180,6 +208,16 @@ public class SslHttpClientTest {
                         KEYSTORE_PASS.toCharArray(), KEYSTORE_PASS.toCharArray()).build();
     }
 
+    /**
+     * Builds the truststore which is used by the client
+     *
+     * @return SSLContext
+     * @throws NoSuchAlgorithmException
+     * @throws KeyStoreException
+     * @throws CertificateException
+     * @throws IOException
+     * @throws KeyManagementException
+     */
     private SSLContext buildTrustStoreSslContext() throws NoSuchAlgorithmException, KeyStoreException,
             CertificateException, IOException, KeyManagementException {
         return SSLContextBuilder.create()

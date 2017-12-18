@@ -133,6 +133,12 @@ public class HttpClientTest {
         Assert.assertNotEquals("DID SOMETHING EVIL", EntityUtils.toString(httpResponse.getEntity()));
     }
 
+    /**
+     * Test confirming that circular redirects are guarded against by default
+     *
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     @Test
     public void testCircularRedirects() throws IOException, URISyntaxException {
         // setup embedded server
@@ -169,6 +175,11 @@ public class HttpClientTest {
         altHttpServer.stop();
     }
 
+    /**
+     * Does two things, sets supercookie if evil.localhost.com and sends a response with text if supercookie is found
+     *
+     * @return HttpRequestHandler
+     */
     private HttpRequestHandler buildRequestHandlerForEvilCookie() {
         return (req, resp, ctx) -> {
             if (req.getFirstHeader("Host").getValue().startsWith(EVIL_HOST)) {
@@ -183,6 +194,11 @@ public class HttpClientTest {
         };
     }
 
+    /**
+     * Effectively overwrites the default DNS lookup so we can create fake domain names to test supercookie
+     *
+     * @return DnsResolver
+     */
     private DnsResolver buildDnsResolver() {
         return host -> {
                 if (host.equals(EVIL_HOST) || host.equals(GOOD_HOST)) {
