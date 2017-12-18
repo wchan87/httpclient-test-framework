@@ -14,29 +14,20 @@ import org.apache.http.impl.bootstrap.HttpServer;
 import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpRequestHandler;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 
 public class HttpClientTest {
 
     private static final String HTTP_SCHEME = "http";
-    private static final String HTTPS_SCHEME = "https";
     private static final String LOCALHOST = "localhost";
     private static final int PORT = 12345;
-    private static final String KEYSTORE_PASS = "changeit";
     private static final String GOOD_HOST = "good.localhost.com";
     private static final String EVIL_HOST = "evil.localhost.com";
     private static final String ROOT_CONTEXT = "/";
@@ -70,39 +61,6 @@ public class HttpClientTest {
         // setup HttpClient
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpUriRequest httpUriRequest = RequestBuilder.get(new URIBuilder().setScheme(HTTP_SCHEME)
-                .setHost(LOCALHOST).setPort(PORT).setPath(ROOT_CONTEXT).build()).build();
-        HttpResponse httpResponse = httpClient.execute(httpUriRequest);
-        Assert.assertEquals(httpResponse.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
-    }
-
-    /**
-     * Test confirming simple HTTPS GET goes through
-     *
-     * @throws UnrecoverableKeyException
-     * @throws CertificateException
-     * @throws NoSuchAlgorithmException
-     * @throws KeyStoreException
-     * @throws IOException
-     * @throws KeyManagementException
-     * @throws URISyntaxException
-     */
-    // https://stackoverflow.com/questions/32618108/example-of-using-ssl-with-org-apache-http-impl-bootstrap-httpserver-from-apache
-    @Test
-    public void testSimpleHttpsGet() throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException,
-            KeyStoreException, IOException, KeyManagementException, URISyntaxException {
-        // setup embedded server
-        httpServer = ServerBootstrap.bootstrap()
-                .setSslContext(buildKeyStoreSslContext())
-                .setListenerPort(PORT)
-                .registerHandler(ROOT_CONTEXT, (req, resp, ctx) -> resp.setStatusCode(HttpStatus.SC_OK))
-                .create();
-        httpServer.start();
-
-        // setup HttpClient
-        HttpClient httpClient = HttpClientBuilder.create()
-                .setSSLContext(buildTrustStoreSslContext())
-                .build();
-        HttpUriRequest httpUriRequest = RequestBuilder.get(new URIBuilder().setScheme(HTTPS_SCHEME)
                 .setHost(LOCALHOST).setPort(PORT).setPath(ROOT_CONTEXT).build()).build();
         HttpResponse httpResponse = httpClient.execute(httpUriRequest);
         Assert.assertEquals(httpResponse.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
@@ -194,20 +152,6 @@ public class HttpClientTest {
                     return null;
                 }
         };
-    }
-
-    private SSLContext buildKeyStoreSslContext() throws UnrecoverableKeyException, CertificateException,
-            NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
-        return SSLContextBuilder.create()
-                .loadKeyMaterial(this.getClass().getResource("/keystore.jks"),
-                        KEYSTORE_PASS.toCharArray(), KEYSTORE_PASS.toCharArray()).build();
-    }
-
-    private SSLContext buildTrustStoreSslContext() throws NoSuchAlgorithmException, KeyStoreException,
-            CertificateException, IOException, KeyManagementException {
-        return SSLContextBuilder.create()
-                .loadTrustMaterial(this.getClass().getResource("/keystore.jks"),
-                        KEYSTORE_PASS.toCharArray()).build();
     }
 
 }
