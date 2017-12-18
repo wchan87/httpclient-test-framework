@@ -3,6 +3,8 @@ package edu.nyu;
 import com.google.common.collect.ImmutableList;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.CircularRedirectException;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -28,6 +30,7 @@ public class HttpClientTest {
     private static final String HTTP_SCHEME = "http";
     private static final String LOCALHOST = "localhost";
     private static final int PORT = 12345;
+    private static final int ALT_PORT = 54321;
     private static final String GOOD_HOST = "good.localhost.com";
     private static final String EVIL_HOST = "evil.localhost.com";
     private static final String ROOT_CONTEXT = "/";
@@ -128,6 +131,42 @@ public class HttpClientTest {
         httpResponse = httpClient.execute(httpUriRequest);
         Assert.assertEquals(httpResponse.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
         Assert.assertNotEquals("DID SOMETHING EVIL", EntityUtils.toString(httpResponse.getEntity()));
+    }
+
+    @Test
+    public void testCircularRedirects() throws IOException, URISyntaxException {
+        // setup embedded server
+        httpServer = ServerBootstrap.bootstrap()
+                .setListenerPort(PORT)
+                .registerHandler(ROOT_CONTEXT, (req, resp, ctx) -> {
+                    resp.setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY);
+                    resp.setHeader("Location", "http://localhost:54321/");
+                }).create();
+        httpServer.start();
+        HttpServer altHttpServer = ServerBootstrap.bootstrap()
+                .setListenerPort(ALT_PORT)
+                .registerHandler(ROOT_CONTEXT, (req, resp, ctx) -> {
+                    resp.setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY);
+                    resp.setHeader("Location", "http://localhost:12345/");
+                }).create();
+        altHttpServer.start();
+
+        // setup HttpClient
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpUriRequest httpUriRequest = RequestBuilder.get(new URIBuilder().setScheme(HTTP_SCHEME)
+                .setHost(LOCALHOST).setPort(PORT).setPath(ROOT_CONTEXT).build()).build();
+        try {
+            httpClient.execute(httpUriRequest);
+            Assert.fail();
+        } catch (ClientProtocolException e) {
+            // assert that we detect circular redirects
+            Assert.assertTrue(e.getCause() instanceof CircularRedirectException);
+            Assert.assertEquals("Circular redirect to 'http://localhost:54321/'",
+                    e.getCause().getLocalizedMessage());
+        }
+
+        // cleanup
+        altHttpServer.stop();
     }
 
     private HttpRequestHandler buildRequestHandlerForEvilCookie() {
