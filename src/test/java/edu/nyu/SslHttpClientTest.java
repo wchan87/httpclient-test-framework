@@ -138,6 +138,7 @@ public class SslHttpClientTest {
      * @throws URISyntaxException
      * @throws InvalidAlgorithmParameterException
      */
+    // TODO find a better way to run this with -Djavax.net.debug=all
     @Test
     public void testCrlCheck() throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException,
             KeyStoreException, IOException, KeyManagementException, URISyntaxException,
